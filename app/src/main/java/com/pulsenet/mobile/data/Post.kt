@@ -9,5 +9,7 @@ data class Post(
     val author: String,
     val content: String,
     val timestamp: Long,
-    val type: String = "text"
+    val type: String = "text",
+    val publicKey: String? = null,
+    val signature: String? = null
 )
