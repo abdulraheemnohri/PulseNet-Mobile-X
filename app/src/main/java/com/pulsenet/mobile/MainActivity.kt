@@ -13,15 +13,18 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.pulsenet.mobile.backend.LocalServer
+import com.pulsenet.mobile.data.IdentityManager
 import com.pulsenet.mobile.data.Post
 import com.pulsenet.mobile.data.PulseDatabase
 import com.pulsenet.mobile.ui.HomeFeedScreen
 import com.pulsenet.mobile.ui.NetworkMapScreen
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     private lateinit var db: PulseDatabase
     private lateinit var server: LocalServer
+    private val identityManager = IdentityManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,16 +37,21 @@ class MainActivity : ComponentActivity() {
         server = LocalServer(db.postDao())
         server.start()
 
-        // Seed some data for MVP demo
-        lifecycleScope.launch {
-           db.postDao().insertPosts(listOf(
-               Post("1", "Alice", "Hello PulseNet! This is a local post.", System.currentTimeMillis()),
-               Post("2", "Bob", "P2P social networks are the future.", System.currentTimeMillis() - 1000)
-           ))
-        }
-
         setContent {
-            PulseNetApp(db)
+            PulseNetApp(db, identityManager) { content ->
+                lifecycleScope.launch {
+                    val signature = identityManager.sign(content)
+                    val post = Post(
+                        id = UUID.randomUUID().toString(),
+                        author = "Me",
+                        content = content,
+                        timestamp = System.currentTimeMillis(),
+                        publicKey = identityManager.getPublicKey(),
+                        signature = signature
+                    )
+                    db.postDao().insertPost(post)
+                }
+            }
         }
     }
 
@@ -54,7 +62,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun PulseNetApp(db: PulseDatabase) {
+fun PulseNetApp(
+    db: PulseDatabase,
+    identityManager: IdentityManager,
+    onCreatePost: (String) -> Unit
+) {
     var selectedTab by remember { mutableStateOf(0) }
     val posts by db.postDao().getAllPosts().collectAsState(initial = emptyList())
 
@@ -79,7 +91,7 @@ fun PulseNetApp(db: PulseDatabase) {
         ) { innerPadding ->
             Surface(modifier = Modifier.padding(innerPadding)) {
                 when (selectedTab) {
-                    0 -> HomeFeedScreen(posts)
+                    0 -> HomeFeedScreen(posts, onCreatePost)
                     1 -> NetworkMapScreen()
                 }
             }
