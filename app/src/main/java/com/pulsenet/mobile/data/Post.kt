@@ -2,7 +2,9 @@ package com.pulsenet.mobile.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "posts")
 data class Post(
     @PrimaryKey val id: String,
