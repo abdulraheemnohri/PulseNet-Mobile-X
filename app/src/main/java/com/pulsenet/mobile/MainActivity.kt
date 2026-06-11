@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.pulsenet.mobile.backend.LocalServer
+import com.pulsenet.mobile.backend.PeerDiscoveryManager
+import com.pulsenet.mobile.backend.SyncManager
 import com.pulsenet.mobile.data.IdentityManager
 import com.pulsenet.mobile.data.Post
 import com.pulsenet.mobile.data.PulseDatabase
@@ -24,6 +26,8 @@ import java.util.UUID
 class MainActivity : ComponentActivity() {
     private lateinit var db: PulseDatabase
     private lateinit var server: LocalServer
+    private lateinit var discoveryManager: PeerDiscoveryManager
+    private lateinit var syncManager: SyncManager
     private val identityManager = IdentityManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,8 +41,15 @@ class MainActivity : ComponentActivity() {
         server = LocalServer(db.postDao())
         server.start()
 
+        discoveryManager = PeerDiscoveryManager(this)
+        discoveryManager.registerService(8080)
+        discoveryManager.discoverServices()
+
+        syncManager = SyncManager(db.postDao())
+        syncManager.startSync(discoveryManager.discoveredPeers)
+
         setContent {
-            PulseNetApp(db, identityManager) { content ->
+            PulseNetApp(db, discoveryManager, identityManager) { content ->
                 lifecycleScope.launch {
                     val signature = identityManager.sign(content)
                     val post = Post(
@@ -58,17 +69,21 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         server.stop()
+        discoveryManager.stop()
+        syncManager.stop()
     }
 }
 
 @Composable
 fun PulseNetApp(
     db: PulseDatabase,
+    discoveryManager: PeerDiscoveryManager,
     identityManager: IdentityManager,
     onCreatePost: (String) -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val posts by db.postDao().getAllPosts().collectAsState(initial = emptyList())
+    val peers by discoveryManager.discoveredPeers.collectAsState()
 
     MaterialTheme {
         Scaffold(
@@ -92,7 +107,7 @@ fun PulseNetApp(
             Surface(modifier = Modifier.padding(innerPadding)) {
                 when (selectedTab) {
                     0 -> HomeFeedScreen(posts, onCreatePost)
-                    1 -> NetworkMapScreen()
+                    1 -> NetworkMapScreen(peers)
                 }
             }
         }

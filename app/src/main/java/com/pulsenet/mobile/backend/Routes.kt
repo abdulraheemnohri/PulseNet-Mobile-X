@@ -5,6 +5,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.*
+import kotlinx.coroutines.flow.first
 
 fun Application.configureRouting(postDao: PostDao) {
     routing {
@@ -13,9 +14,14 @@ fun Application.configureRouting(postDao: PostDao) {
         }
 
         get("/posts") {
-            // In a real app, we'd collect from the flow or use a one-shot query.
-            // For MVP, we'll just return a success message or mock data if we can't easily access DB here without flow collection.
-            call.respondText("Posts endpoint reached")
+            val posts = postDao.getAllPosts().first()
+            call.respond(posts)
+        }
+
+        get("/sync/hashes") {
+            val posts = postDao.getAllPosts().first()
+            val hashes = posts.map { it.id }
+            call.respond(hashes)
         }
     }
 }
