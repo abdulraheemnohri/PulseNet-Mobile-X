@@ -33,13 +33,6 @@ fun HomeFeedScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item {
-                Text(
-                    text = "PulseNet Feed",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            }
             items(posts) { post ->
                 PostItem(post)
             }
@@ -54,7 +47,7 @@ fun HomeFeedScreen(
                 TextField(
                     value = text,
                     onValueChange = { text = it },
-                    placeholder = { Text("What's happening?") }
+                    placeholder = { Text("Share to the swarm...") }
                 )
             },
             confirmButton = {
@@ -91,10 +84,12 @@ fun PostItem(post: Post) {
                 }
             }
             if (post.communityId != null) {
-                Text(text = "in Community: ${post.communityId}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+                Text(text = "in Group: ${post.communityId}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = post.content, style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = post.id, style = MaterialTheme.typography.labelSmall, color = androidx.compose.ui.graphics.Color.Gray)
         }
     }
 }

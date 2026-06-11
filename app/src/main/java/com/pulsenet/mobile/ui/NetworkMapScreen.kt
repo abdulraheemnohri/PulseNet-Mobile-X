@@ -17,18 +17,18 @@ fun NetworkMapScreen(peers: List<NsdServiceInfo>) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "P2P Network Map",
+            text = "Active Swarm",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(16.dp)
         )
 
         if (peers.isEmpty()) {
             Spacer(modifier = Modifier.height(32.dp))
-            Text(text = "Scanning for nearby nodes...", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "Scanning for mesh peers...", style = MaterialTheme.typography.bodyMedium)
             CircularProgressIndicator(modifier = Modifier.padding(16.dp))
         } else {
             Text(
-                text = "Found ${peers.size} active nodes",
+                text = "${peers.size} nodes in mesh",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -52,6 +52,7 @@ fun PeerItem(peer: NsdServiceInfo) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = peer.serviceName, style = MaterialTheme.typography.titleSmall)
+            Text(text = "Type: LAN / Mesh", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             Text(text = "Address: ${peer.host?.hostAddress ?: "Resolving..."}:${peer.port}", style = MaterialTheme.typography.bodySmall)
         }
     }

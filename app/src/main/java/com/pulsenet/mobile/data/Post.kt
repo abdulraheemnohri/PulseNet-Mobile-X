@@ -14,5 +14,6 @@ data class Post(
     val type: String = "text",
     val publicKey: String? = null,
     val signature: String? = null,
-    val communityId: String? = null
+    val communityId: String? = null,
+    val replicationScore: Int = 0
 )
