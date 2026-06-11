@@ -1,6 +1,7 @@
 package com.pulsenet.mobile.backend
 
 import com.pulsenet.mobile.data.PostDao
+import com.pulsenet.mobile.data.CommunityDao
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -10,7 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class LocalServer(private val postDao: PostDao) {
+class LocalServer(private val postDao: PostDao, private val communityDao: CommunityDao) {
     private var server: NettyApplicationEngine? = null
 
     fun start() {
@@ -19,7 +20,7 @@ class LocalServer(private val postDao: PostDao) {
                 install(ContentNegotiation) {
                     json()
                 }
-                configureRouting(postDao)
+                configureRouting(postDao, communityDao)
             }.start(wait = true)
         }
     }

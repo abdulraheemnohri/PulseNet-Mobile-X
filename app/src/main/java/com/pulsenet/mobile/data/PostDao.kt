@@ -11,6 +11,9 @@ interface PostDao {
     @Query("SELECT * FROM posts ORDER BY timestamp DESC")
     fun getAllPosts(): Flow<List<Post>>
 
+    @Query("SELECT * FROM posts WHERE communityId = :communityId ORDER BY timestamp DESC")
+    fun getPostsByCommunity(communityId: String): Flow<List<Post>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPost(post: Post)
 

@@ -13,5 +13,6 @@ data class Post(
     val timestamp: Long,
     val type: String = "text",
     val publicKey: String? = null,
-    val signature: String? = null
+    val signature: String? = null,
+    val communityId: String? = null
 )

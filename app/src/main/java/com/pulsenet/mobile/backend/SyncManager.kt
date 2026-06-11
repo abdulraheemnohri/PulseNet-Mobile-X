@@ -4,6 +4,8 @@ import android.net.nsd.NsdServiceInfo
 import android.util.Log
 import com.pulsenet.mobile.data.Post
 import com.pulsenet.mobile.data.PostDao
+import com.pulsenet.mobile.data.Community
+import com.pulsenet.mobile.data.CommunityDao
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.okhttp.*
@@ -13,7 +15,7 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 
-class SyncManager(private val postDao: PostDao) {
+class SyncManager(private val postDao: PostDao, private val communityDao: CommunityDao) {
     private val client = HttpClient(OkHttp) {
         install(ContentNegotiation) {
             json()
@@ -29,23 +31,31 @@ class SyncManager(private val postDao: PostDao) {
                     try {
                         val host = peer.host?.hostAddress ?: continue
                         val port = peer.port
-                        val url = "http://$host:$port/posts"
 
-                        Log.d("Sync", "Syncing with $url")
-                        val remotePosts: List<Post> = client.get(url).body()
+                        // Sync Communities
+                        val communitiesUrl = "http://$host:$port/communities"
+                        val remoteCommunities: List<Community> = client.get(communitiesUrl).body()
+                        val localCommunities = communityDao.getAllCommunities().first()
+                        val localCommunityIds = localCommunities.map { it.id }.toSet()
+                        val newCommunities = remoteCommunities.filter { it.id !in localCommunityIds }
+                        if (newCommunities.isNotEmpty()) {
+                            communityDao.insertCommunities(newCommunities)
+                        }
+
+                        // Sync Posts
+                        val postsUrl = "http://$host:$port/posts"
+                        val remotePosts: List<Post> = client.get(postsUrl).body()
                         val localPosts = postDao.getAllPosts().first()
-                        val localIds = localPosts.map { it.id }.toSet()
-
-                        val newPosts = remotePosts.filter { it.id !in localIds }
+                        val localPostIds = localPosts.map { it.id }.toSet()
+                        val newPosts = remotePosts.filter { it.id !in localPostIds }
                         if (newPosts.isNotEmpty()) {
-                            Log.d("Sync", "Found ${newPosts.size} new posts from peer")
                             postDao.insertPosts(newPosts)
                         }
                     } catch (e: Exception) {
                         Log.e("Sync", "Failed to sync with peer ${peer.serviceName}", e)
                     }
                 }
-                delay(10000) // Sync every 10 seconds
+                delay(15000) // Sync every 15 seconds
             }
         }
     }

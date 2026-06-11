@@ -9,20 +9,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.pulsenet.mobile.data.Post
+import com.pulsenet.mobile.data.Community
 
 @Composable
-fun HomeFeedScreen(
-    posts: List<Post>,
-    onCreatePost: (String) -> Unit
+fun CommunitiesScreen(
+    communities: List<Community>,
+    onCreateCommunity: (String, String) -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    var text by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Create Post")
+                Icon(Icons.Default.Add, contentDescription = "Create Community")
             }
         }
     ) { innerPadding ->
@@ -35,13 +36,13 @@ fun HomeFeedScreen(
         ) {
             item {
                 Text(
-                    text = "PulseNet Feed",
+                    text = "Communities",
                     style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
-            items(posts) { post ->
-                PostItem(post)
+            items(communities) { community ->
+                CommunityItem(community)
             }
         }
     }
@@ -49,23 +50,32 @@ fun HomeFeedScreen(
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Create Post") },
+            title = { Text("Create Community") },
             text = {
-                TextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    placeholder = { Text("What's happening?") }
-                )
+                Column {
+                    TextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        placeholder = { Text("Community Name") }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        placeholder = { Text("Description") }
+                    )
+                }
             },
             confirmButton = {
                 Button(onClick = {
-                    if (text.isNotBlank()) {
-                        onCreatePost(text)
-                        text = ""
+                    if (name.isNotBlank()) {
+                        onCreateCommunity(name, description)
+                        name = ""
+                        description = ""
                         showDialog = false
                     }
                 }) {
-                    Text("Post")
+                    Text("Create")
                 }
             },
             dismissButton = {
@@ -78,23 +88,13 @@ fun HomeFeedScreen(
 }
 
 @Composable
-fun PostItem(post: Post) {
+fun CommunityItem(community: Community) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(text = post.author, style = MaterialTheme.typography.titleSmall)
-                if (post.signature != null) {
-                    Text(text = "✓ Verified", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                }
-            }
-            if (post.communityId != null) {
-                Text(text = "in Community: ${post.communityId}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = post.content, style = MaterialTheme.typography.bodyLarge)
+            Text(text = community.name, style = MaterialTheme.typography.titleMedium)
+            Text(text = community.description, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
